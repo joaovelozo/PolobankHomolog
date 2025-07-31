@@ -109,25 +109,41 @@ class PersonalChatController extends Controller
                 $data['agency_id'] = $agency->id;
             }
 
+
             // Envio de imagem base64
             if ($request->has('image')) {
+                Log::info("Recebendo imagem na etapa: {$currentStep}");
+
                 if (!in_array($currentStep, ['image_doc', 'image_doc_verso', 'image_comprovante', 'image_selfie'])) {
+                    Log::warning("Imagem enviada fora da etapa correta. Etapa atual: {$currentStep}");
                     return response()->json(['reply' => 'Por favor, envie as imagens somente quando solicitado.'], 200);
                 }
-                $filename = $this->uploadBase64($request->input('image'), $currentStep);
-                if (!$filename) {
-                    return response()->json(['reply' => 'Falha ao salvar a imagem, tente novamente.'], 200);
+
+                // Aqui você apenas valida o base64, sem salvar no disco
+                if (!$this->validateBase64Image($request->input('image'))) {
+                    Log::error("Base64 inválido enviado na etapa: {$currentStep}");
+                    return response()->json(['reply' => 'Imagem inválida, tente novamente.'], 200);
                 }
-                $data[$currentStep] = $filename;
+
+                // Salva o base64 no banco (no campo correto)
+                $data[$currentStep] = $request->input('image');
+
                 $chat->data = $data;
                 $chat->step = $this->getNextStep($currentStep);
                 $chat->save();
+
+                Log::info("Base64 salvo com sucesso. Próxima etapa: {$chat->step}");
+
                 if ($chat->step === 'done') {
+                    Log::info("Todas as etapas concluídas. Iniciando finalização.");
                     $this->processFinalization($data);
-                    return response()->json(['reply' => 'Cadastro finalizado com sucesso!, Em Breve Você Receberá um Email de Boas Vindas! 🎉'], 200);
+                    return response()->json(['reply' => 'Cadastro finalizado com sucesso!, Em até <b>05 dias úteis</b> Você Receberá um Email de Boas Vindas! 🎉'], 200);
                 }
-                return response()->json(['reply' => "Imagem recebida. Agora, por favor, envie: {$chat->step}"], 200);
+
+                return response()->json(['reply' => "Imagem recebida. Agora, por favor, envie: " . $this->getPromptMessage($chat->step)], 200);
             }
+
+
 
             // Se mensagem vazia
             if ($message === '') {
@@ -327,7 +343,9 @@ class PersonalChatController extends Controller
             ]);
             $contract = $this->contractService->createContractForUser($user);
 
-            $this->personalAccountService->personalRegister($user->toArray());
+            $response = $this->personalAccountService->personalRegister($user->toArray());
+            $user->account_id = $response['account'];
+            $user->save();
 
             Log::info("Usuário {$user->id} criado com agência {$data['agency_id']}. Contrato ID: {$contract->id}");
             DB::commit();
@@ -365,39 +383,85 @@ class PersonalChatController extends Controller
             'name' => 'Por favor, informe seu <b>Nome Completo!</b>',
             'username' => 'Como gostaria de ser <b>Chamado(a)?</b>',
             'nameMother' => 'Qual o nome da sua <b>Mãe?</b>',
-            'documentNumber' => 'Informe seu <b>CPF</b> (somente números)1',
-            'identityDocument' => 'Informe o <b>Número do seu Documento de Identidade ou CNH!</b>',
-            'issueDate' => 'Informe a <b>Data de Emissão do Documento de Identificação!</b>',
+            'documentNumber' => 'Informe seu <b>CPF (Somente Números Sem Pontos)!</b> ',
+            'identityDocument' => 'Informe o <b>Número do seu Documento de Identidade ou CNH (Somente Números Sem Pontos)!</b>',
+            'issueDate' => 'Informe a <b>Data de Emissão do Documento de Identificação (Somente Números Sem Pontos)!</b>',
             'issuingAgency' => 'Informe o <b> Órgão Emissor do Documento de Identificação!</b>',
-            'issuingState' => 'Informe o <b>Estado Emissor do Documento de Identificação (sigla)!</b>',
+            'issuingState' => 'Informe o <b>Estado Emissor do Documento de Identificação (Sigla do Estado)!</b>',
             'profession' => 'Informe <b>Sua Profissão!</b>',
             'gender' => 'Informe seu sexo: <b>Masculino, Feminino ou Outros!</b>',
             'idMaritalStatus' => 'Informe seu Estado Civil: <b>Solteiro, Casado, Separado ou Viúvo!</b>',
-            'political' => 'Você é PEP? Responda <b>Sim ou Não!</b>',
-            'phoneNumber' => 'Informe o <b>Seu Número Celular!</b>',
-            'cellPhone' => 'Informe  seu <b>WhatsApp!</b>',
+            'political' => 'Você é PEP? (Pessoal Politicamente  Exposta) Responda <b>Sim ou Não!</b>',
+            'phoneNumber' => 'Informe o <b>Seu Número Celular (Somente Números Sem Pontos)!</b>',
+            'cellPhone' => 'Informe  seu <b>WhatsApp (Somente Números Sem Pontos)!</b>',
             'birthdate' => 'Informe sua <b>Data de Nascimento!</b>',
-            'rent' => 'Informe sua <b>Renda Mensal (Aproximada)!</b>',
+            'rent' => 'Informe sua <b>Renda Mensal (Aproximada) (Somente Números Sem Pontos)!</b>',
             'address' => 'Informe  Seu <b>Endereço Completo(Sem o Número)!</b>',
-            'addressNumber' => 'Informe o <b>Número da Residência!</b>',
-            'zipCode' => 'Informe o <b>CEP da Residência!</b>',
+            'addressNumber' => 'Informe o <b>Número da Residência (Se For Sem Número Digite "00")!</b>',
+            'zipCode' => 'Informe o <b>CEP da Residência (Somente Números Sem Pontos)!</b>',
             'neighborhood' => 'Informe o <b>Bairro da Residência!</b>',
             'city' => 'Informe  a <b>Cidade!</b>',
             'state' => 'Informe o <b>Estado (sigla)!</b>',
             'email' => 'Informe <b>Seu Email de Acesso!</b>',
             'password' => '<b>Crie Uma senha.</b>',
             'accept_terms' => '<b>Você Concorda Com Os Termos de Uso? Sim ou Não!</b>',
-            'image_doc' => '<b> Agora Envie uma Imagem da Frente de Seu Documento de Identificação (Imagem)!</b>',
-            'image_doc_verso' => '<b>Envie uma Imagem do Verso de Seu Documento de Identificação (Imagem)!</b>',
-            'image_comprovante' => '<b>Envie um Comprovante de Endereço (Imagem)!</b>',
-            'image_selfie' => 'Envie uma selfie com o documento!',
+            'image_doc' => '<label><b> Agora Envie uma Imagem da Frente de Seu Documento de Identificação (Imagem, PNG ou JPG)!</b></label>',
+            'image_doc_verso' => '<label><b>Envie uma Imagem do Verso de Seu Documento de Identificação (Imagem, PNG ou JPG)!</b></label>',
+            'image_comprovante' => '<label><b>Envie um Comprovante de Endereço (Imagem, PNG ou JPG)!</b></label>',
+            'image_selfie' => '<label><b>Envie uma selfie com o documento!</b></label>',
         ];
         return $prompts[$step] ?? 'Informe o próximo dado.';
     }
-
+    protected function validateBase64Image($base64)
+    {
+        return base64_decode($base64, true) !== false;
+    }
     protected function uploadBase64($base64, $prefix)
     {
-        if (!$base64) return null;
-        return $base64; // Armazena base64
+        if (!$base64) {
+            Log::error("Base64 vazio ao tentar salvar imagem.");
+            return null;
+        }
+
+
+        try {
+            // Extrai o tipo e os dados do base64 (ex: data:image/png;base64,...)
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
+                $base64 = substr($base64, strpos($base64, ',') + 1);
+                $extension = strtolower($type[1]); // jpg, png, gif etc.
+                if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) {
+                    Log::error("Extensão de imagem inválida: {$extension}");
+                    return null;
+                }
+            } else {
+                Log::error("Formato de base64 inválido.");
+                return null;
+            }
+
+            $base64 = str_replace(' ', '+', $base64);
+            $imageData = base64_decode($base64);
+
+            if ($imageData === false) {
+                Log::error("Falha ao decodificar base64.");
+                return null;
+            }
+
+            $filename = $prefix . '_' . time() . '.' . $extension;
+            $path = public_path('uploads/' . $filename);
+
+            if (!file_exists(public_path('uploads'))) {
+                mkdir(public_path('uploads'), 0755, true);
+            }
+
+            file_put_contents($path, $imageData);
+
+            Log::info("Imagem salva com sucesso em: uploads/{$filename}");
+
+            // Retorna apenas o caminho relativo para salvar no banco
+            return 'uploads/' . $filename;
+        } catch (\Exception $e) {
+            Log::error("Erro ao salvar imagem base64: " . $e->getMessage());
+            return null;
+        }
     }
 }

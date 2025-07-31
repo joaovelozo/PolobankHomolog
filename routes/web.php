@@ -103,7 +103,7 @@ Route::post('/webhook/Kojahdjha', [Starkbank::class, 'handle']);
 Route::post('/pix/webhook', [PixController::class, 'webhook'])->name('pix.webhook');
 
 //MyBank
-Route::post('/webhook/update-user',[MyBankController::class,' updateUser'])->name('webhook.update.user');
+Route::post('/webhook/update-user',[MyBankController::class,'updateUser'])->name('webhook.update-user');
 
 // ChatController - PF
 

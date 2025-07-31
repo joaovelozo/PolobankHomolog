@@ -21,10 +21,13 @@ class BalanceService
 
     public function RealBalance(array $payload)
     {
+        $user = Auth::user();
+
 
         $baseUrl = rtrim(config('mb.url'), '/');
-        $clientId = config('mb.client_id');
-        $clientSecret = config('mb.client_secret');
+        $clientId = $user->client_id;
+        $clientSecret = $user->client_secret;
+
         $grantType = config('mb.grant_type');
         $applicationToken = config('mb.application_token');
 

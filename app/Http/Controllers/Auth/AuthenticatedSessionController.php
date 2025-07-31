@@ -25,21 +25,35 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+{
+    $request->authenticate();
 
-        Auth::user()->update(['last_login' => Carbon::now()]);
+    $user = Auth::user();
 
-        $url = '';
-       if($request->user()->role === 'admin'){
-        $url = 'admin/dashboard';
-       }elseif($request->user()->role === 'manager') {
-        $url = 'agency/dashboard';
-       }elseif($request->user()->role === 'user'){
-        $url = '/dashboard';
-       }
-        return redirect()->intended($url);
+    // Verifica se o status é diferente de 'active'
+    if ($user->status !== 'active') {
+        Auth::logout();
+        return redirect()->route('login')->withErrors([
+            'email' => 'Sua conta está inativa. Em Breve Você Reberá Um Email de Ativação!.',
+        ]);
     }
+
+    // Atualiza o último login
+    $user->update(['last_login' => Carbon::now()]);
+
+    // Redirecionamento conforme o papel do usuário
+    $url = '';
+    if ($user->role === 'admin') {
+        $url = 'admin/dashboard';
+    } elseif ($user->role === 'manager') {
+        $url = 'agency/dashboard';
+    } elseif ($user->role === 'user') {
+        $url = '/dashboard';
+    }
+
+    return redirect()->intended($url);
+}
+
 
     /**
      * Destroy an authenticated session.

@@ -191,7 +191,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="address">Endereço</label>
-                                                <input type="text" class="form-control" id="endereco" name="address"
+                                                <input type="text" class="form-control"  name="address"
                                                     value="{{ old('address') }}" placeholder="Digite Corretamente"
                                                     required>
                                             </div>
@@ -208,15 +208,15 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="neighborhood">Bairro</label>
-                                                <input type="text" class="form-control" id="bairro"
+                                                <input type="text" class="form-control"
                                                     name="neighborhood" value="{{ old('neighborhood') }}"
-                                                    placeholder="Digite Corretamente" required  readonly>
+                                                    placeholder="Digite Corretamente" required >
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="city">Cidade</label>
-                                                <input type="text" class="form-control" id="cidade" name="city"
+                                                <input type="text" class="form-control" name="city"
                                                     value="{{ old('city') }}" placeholder="Digite Corretamente"
                                                     required>
                                             </div>
@@ -224,9 +224,9 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="state">Estado</label>
-                                                <input type="text" class="form-control" id="estado" name="state"
+                                                <input type="text" class="form-control"  name="state"
                                                     value="{{ old('state') }}" placeholder="Digite Corretamente"
-                                                    readonly required>
+                                                   required>
                                             </div>
                                         </div>
 
@@ -322,33 +322,6 @@
         });
     </script>
 
-    <script>
-        function buscarEndereco() {
-            const cep = document.getElementById('cep').value.replace(/\D/g, '');
-            if (cep !== '') {
-                const validacep = /^[0-9]{8}$/;
-                if (validacep.test(cep)) {
-                    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!data.erro) {
-                                document.getElementById('endereco').value = data.logradouro;
-                                document.getElementById('cidade').value = data.localidade;
-                                document.getElementById('bairro').value = data.bairro;
-                                document.getElementById('estado').value = data.uf;
-                            } else {
-                                alert('CEP não encontrado.');
-                            }
-                        })
-                        .catch(error => {
-                            alert('Erro ao buscar o CEP.');
-                            console.error(error);
-                        });
-                } else {
-                    alert('Formato de CEP inválido.');
-                }
-            }
-        }
-    </script>
+
 
 @endsection

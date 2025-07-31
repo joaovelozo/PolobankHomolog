@@ -5,19 +5,21 @@ namespace App\Services\MyBank;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class TokenService
 {
-    public function generateToken(string $baseUrl, string $clientId, string $clientSecret, string $grantType = 'client_credentials')
+    public function generateToken(string $baseUrl)
     {
         $url = rtrim($baseUrl, '/') . '/token';
 
-        $postData = [
-            'clientid' => $clientId,
-            'clientsecret' => $clientSecret,
-            'grant_type' => $grantType,
-        ];
 
+
+        $postData = [
+            'clientid' => config('mb.client_id'),
+            'clientsecret' => config('mb.client_secret'),
+            'grant_type' => config('mb.grant_type'),
+        ];
         try {
             Log::info('Enviando POST para /token com dados:', $postData);
 

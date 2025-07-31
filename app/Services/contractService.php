@@ -1,13 +1,15 @@
 <?php
+
 namespace App\Services;
+
 use App\Models\OpenContract;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ContractService
-    {
-        public function createContractForUser(User $user)
+{
+    public function createContractForUser(User $user)
     {
         DB::beginTransaction();
 
@@ -34,7 +36,6 @@ class ContractService
             DB::commit();
 
             return $contract;
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -49,30 +50,25 @@ class ContractService
      */
     private function generateContractContent(User $user)
     {
+        $contractContent = "<img src='/images/logo.svg' alt='Cabeçalho do Contrato'>\n";
+        $contractContent .= "<b>CONTRATO DE ABERTURA DE CONTA</b><br><br>";
+        $contractContent .= "<b>Nome:</b> {$user->name}<br>";
+        $contractContent .= "<b>CPF:</b> {$user->documentNumber}<br>";
+        $contractContent .= "<b>Data de Nascimento:</b> {$user->birthdate}<br>";
+        $contractContent .= "<b>Sexo:</b> {$user->gender}<br>";
+        $contractContent .= "<b>Logradouro:</b> {$user->address}<br>";
+        $contractContent .= "<b>Número:</b> {$user->addressNumber}<br>";
+        $contractContent .= "<b>Complemento:</b> {$user->complement}<br>";
+        $contractContent .= "<b>Bairro:</b> {$user->neighborhood}<br>";
+        $contractContent .= "<b>Cidade:</b> {$user->city}<br>";
+        $contractContent .= "<b>CEP:</b> {$user->zipCode}<br>";
+        $contractContent .= "<b>Telefone:</b> {$user->phoneNumber}<br>";
+        $contractContent .= "<b>Email:</b> {$user->email}<br>";
 
 
-            //Criação de contrato
-            $incomeFormatted = number_format($user->rent, 2, ',', '.'); // Formata para duas casas decimais, separando os milhares por ponto e a vírgula como separador decimal
-
-            $contractContent = "<img src='/images/logo.svg' alt='Cabeçalho do Contrato'>\n";
-            $contractContent .= "<b>CONTRATO DE ABERTURA DE CONTA</b><br><br>";
-            $contractContent .= "<b>Nome:</b> {$user->name}<br>";
-            $contractContent .= "<b>CPF:</b> {$user->documentNumber}<br>";
-            $contractContent .= "<b>Data de Nascimento:</b> {$user->birthdate}<br>";
-            $contractContent .= "<b>Sexo:</b> {$user->gender}<br>";
-            $contractContent .= "<b>Logradouro:</b> {$user->address}<br>";
-            $contractContent .= "<b>Número:</b> {$user->addressNumber}<br>";
-            $contractContent .= "<b>Complemento:</b> {$user->complement}<br>";
-            $contractContent .= "<b>Bairro:</b> {$user->neighborhood}<br>";
-            $contractContent .= "<b>Cidade:</b> {$user->city}<br>";
-            $contractContent .= "<b>CEP:</b> {$user->zipCode}<br>";
-            $contractContent .= "<b>Telefone:</b> {$user->phoneNumber}<br>";
-            $contractContent .= "<b>Email:</b> {$user->email}<br>";
-            $contractContent .= "<b>Renda Mensal:</b> R$ {$incomeFormatted}<br><br>";
-
-            // Cláusula 1: Pessoas Politicamente Expostas
-            $contractContent .= "<b>PESSOAS POLITICAMENTE EXPOSTAS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        // Cláusula 1: Pessoas Politicamente Expostas
+        $contractContent .= "<b>PESSOAS POLITICAMENTE EXPOSTAS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         Conforme estabelece a Circular 3.461 do Banco Central do Brasil, de 24 de julho de 2009, as
         Instituições Financeiras devem identificar pessoas que desempenham ou tenham desempenhado,
         nos últimos 5 (cinco) anos, no Brasil ou em outros países, cargos, empregos ou funções públicas
@@ -82,9 +78,9 @@ class ContractService
         Possui relacionamento/ligação com Agente Público? ( ) Sim ( ) Não
         </p><br>";
 
-            // Cláusula 2: Declaração do Cliente
-            $contractContent .= "<b>DECLARAÇÃO DO CLIENTE</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        // Cláusula 2: Declaração do Cliente
+        $contractContent .= "<b>DECLARAÇÃO DO CLIENTE</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         Declaro que as informações acima são a expressão da verdade, responsabilizando-me por elas, sob
         pena de aplicação do dispositivo nº 64 da Lei 8.383, de 30 de dezembro de 1991. Autorizo o Banco
         POLOCAL BANK, sediado em Q C11 LT 08 SL 202 SN - BRASILIA, TAGUATINGA - DF, por seus
@@ -131,9 +127,9 @@ class ContractService
 
         </p><br>";
 
-            // Cláusula 2: Declaração do Cliente
-            $contractContent .= "<center><b>CONTRATO DE ABERTURA DE CONTA CORRENTE</b></center><br><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        // Cláusula 2: Declaração do Cliente
+        $contractContent .= "<center><b>CONTRATO DE ABERTURA DE CONTA CORRENTE</b></center><br><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         <b>BANCO POLOCAL BANK</b>, com sede em Q C11 LT 08 SL 202 SN - BRASILIA, TAGUATINGA - DF,
         inscrito no CNPJ/MF sob o nº 17.300.093/0001-72, adiante denominado <b>“BANCO”</b> e a(s) pessoa(s)
         qualificada(s) na Ficha Cadastral, a seguir designado como <b>“CORRENTISTA”<b>, têm entre si justo e
@@ -141,8 +137,8 @@ class ContractService
         regerá pelas seguintes cláusulas e condições:
 
         </p><br>";
-            $contractContent .= "<b>1. DA FINALIDADE DO CONTRATO</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>1. DA FINALIDADE DO CONTRATO</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         1.1. Serão regidas por este Contrato: a abertura, manutenção e movimentação de conta
         corrente bancária, a qual registrará créditos e débitos entre o BANCO e o CORRENTISTA,
         que sejam exigíveis à vista, todas vinculadas à conta corrente, de acordo com as opções e
@@ -153,8 +149,8 @@ class ContractService
         exigíveis à vista.
         </p><br>";
 
-            $contractContent .= "<b>2. DA ADESÃO AO CONTRATO</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>2. DA ADESÃO AO CONTRATO</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         2.1. A adesão a este Contrato será realizada por qualquer dos meios admitidos em direito,
         em especial por meio de aceitação pelo BANCO da Ficha Cadastral, preenchida pelo
         CORRENTISTA, depois de devidamente analisada, e, ainda aceitação dos termos aqui
@@ -172,8 +168,8 @@ class ContractService
         estão em conformidade com as regulamentações aplicáveis ao BANCO.
         </p><br>";
 
-            $contractContent .= "<b>3. DA ABERTURA DA CONTA CORRENTE</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>3. DA ABERTURA DA CONTA CORRENTE</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         3.1. Com a adesão a esse Contrato, o BANCO abrirá e manterá em seus sistemas conta
         corrente em nome do CORRENTISTA, utilizando-se, para tanto, dos dados cadastrais
         constantes da Ficha Cadastral, de acordo com os comprovantes entregues pelo
@@ -188,8 +184,8 @@ class ContractService
         atualizados para garantir a segurança na movimentação da conta corrente.
         </p><br>";
 
-            $contractContent .= "<b>4. DA MOVIMENTAÇÃO DA CONTA CORRENTE</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>4. DA MOVIMENTAÇÃO DA CONTA CORRENTE</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         4.1. O BANCO movimentará a conta corrente aberta nos termos deste Contrato, nela
         efetuando lançamentos a crédito e a débito. Sobre os valores depositados não incidirá
         remuneração de qualquer natureza.
@@ -242,8 +238,8 @@ class ContractService
         </p><br>";
 
 
-            $contractContent .= "<b>5. COMPENSAÇÃO RECÍPROCA DE CRÉDITOS E DÉBITOS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>5. COMPENSAÇÃO RECÍPROCA DE CRÉDITOS E DÉBITOS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         5.1. Os lançamentos a crédito e a débito na conta corrente compensar-se-ão
         reciprocamente, a todo tempo. A compensação, uma vez acontecida, extinguirá os créditos
         e débitos do CORRENTISTA perante o BANCO até a respectiva concorrência dos valores.
@@ -252,16 +248,16 @@ class ContractService
         lançamentos efetuados há mais tempo.
         </p><br>";
 
-            $contractContent .= "<b>6. DA CONTRATAÇÃO DE PACOTE DE SERVIÇOS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>6. DA CONTRATAÇÃO DE PACOTE DE SERVIÇOS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         6.1. O CORRENTISTA possui a faculdade de optar, sem a necessidade de adesão ou
         contratação especifica de pacote de serviços, pela utilização de serviços e pagamento de
         tarifas individualizados, além daqueles serviços gratuitos previstos no regulamento vigente,
         conforme determinação da Resolução do BACEN 4.196/2013.
         </p><br>";
 
-            $contractContent .= "<b>7. OPERAÇÕES A DESCOBERTO</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>7. OPERAÇÕES A DESCOBERTO</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         7.1. O CORRENTISTA obriga-se a não realizar qualquer operação bancária que acarrete
         débitos em conta corrente quando o saldo disponível em conta corrente não for suficiente
         para suportar o referido débito. Por saldo disponível entende-se o saldo credor em conta
@@ -283,8 +279,8 @@ class ContractService
         passando a incidir os encargos moratórios previstos na cláusula 8 abaixo.
         </p><br>";
 
-            $contractContent .= "<b>8. PRESTAÇÃO DE CONTAS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>8. PRESTAÇÃO DE CONTAS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         8.1. O BANCO disponibilizará ao CORRENTISTA mensalmente, extrato das movimentações
         registradas na conta corrente. O BANCO poderá enviar tais extratos ao domicílio do
         CORRENTISTA, ou caso este assim o prefira terá direito a dois extratos mensais, de forma
@@ -303,8 +299,8 @@ class ContractService
         BANCO através do link: https://banco.polocal.com.br/login.
         </p><br>";
 
-            $contractContent .= "<b>9. MORA E ENCARGOS MORATÓRIOS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>9. MORA E ENCARGOS MORATÓRIOS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         9.1. Caso o CORRENTISTA incorra em mora com relação a qualquer obrigação de
         pagamento de valores decorrente deste Contrato, sobre os valores em mora incidirão: a)
         comissão de permanência, correspondente à taxa média cobrada nas operações praticadas
@@ -332,8 +328,8 @@ class ContractService
         de seus créditos, bem como dos honorários advocatícios.
         </p><br>";
 
-            $contractContent .= "<b>10. MEDIDAS DE SEGURANÇA</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>10. MEDIDAS DE SEGURANÇA</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         10.1. O BANCO adota tecnologias necessárias para a proteção das contas correntes e possui
         ceritifcados digitais de garantia e segurança que estão de acordo com a legislação e
         regulamentações aplicáveis.
@@ -390,8 +386,8 @@ class ContractService
         imediatamente ao identificar algum procedimento suspeito antes de realizá-lo.
         </p><br>";
 
-            $contractContent .= "<b>11. CONSULTA E COMPARTILHAMENTO DE DADOS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>11. CONSULTA E COMPARTILHAMENTO DE DADOS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         11.1. O CORRENTISTA autoriza, desde já, que o BANCO:
             a) Consulte o Sistema de Informações de Crédito (“SCR”) e a base de dados referentes
             aos recebíveis de arranjo de pagamentos liquidados de forma centralizada do Banco
@@ -437,8 +433,8 @@ class ContractService
 
         </p><br>";
 
-            $contractContent .= "<b>12. PRAZO DESTE CONTRATO</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>12. PRAZO DESTE CONTRATO</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         12.1. Este Contrato vigorará por prazo indeterminado, podendo ser rescindido a qualquer
         tempo, pelo BANCO ou pelo CORRENTISTA, mediante notificação prévia com antecedência
         de 15 (quinze) dias.
@@ -475,8 +471,8 @@ class ContractService
         Emitentes de Cheque Sem Fundo do Banco Central do Brasil.
         </p><br>";
 
-            $contractContent .= "<b>13. CONSEQUÊNCIAS DO ENCERRAMENTO DA CONTA CORRENTE</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>13. CONSEQUÊNCIAS DO ENCERRAMENTO DA CONTA CORRENTE</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         13.1. Rescindido este Contrato e encerrada a conta corrente o CORRENTISTA não poderá
         realizar as operações bancárias e deverá devolver ao BANCO as folhas de cheques em seu
         poder, ou então apresentar declaração de que as inutilizou, responsabilizando-se por todas
@@ -491,8 +487,8 @@ class ContractService
         informando a data do efetivo encerramento da conta de depósito à vista.
         </p><br>";
 
-            $contractContent .= "<b>14. EMISSÃO DE CHEQUES</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>14. EMISSÃO DE CHEQUES</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         14.1. O CORRENTISTA poderá sacar contra o BANCO ordens de pagamento por meio da
         emissão de cheques, em obediência à legislação e regulamentação vigente.
 
@@ -533,8 +529,8 @@ class ContractService
 
         </p><br>";
 
-            $contractContent .= "<b>15. REGISTRO EM CONTA CORRENTE</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>15. REGISTRO EM CONTA CORRENTE</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         15.1. O CORRENTISTA concorda expressamente que o BANCO debite em sua conta corrente:
         a) o valor correspondente a todos os cheques emitidos e efetivamente pagos; b) o valor
         correspondente a todas as transferências de recurso cursadas; c) o valor correspondente a
@@ -550,8 +546,8 @@ class ContractService
         conta corrente contratadas pelo CORRENTISTA junto ao BANCO.
         </p><br>";
 
-            $contractContent .= "<b>16. DA AUTORIZAÇÃO PARA INFORMAÇÕES</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>16. DA AUTORIZAÇÃO PARA INFORMAÇÕES</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         16.1. O CORRENTISTA autoriza o BANCO a trocar informações creditícias, cadastrais e
         financeiras a seu respeito e a utilizar seu endereço, inclusive eletrônico, para o envio de
         malas diretas, venda de produtos e serviços, outras correspondências promocionais e,
@@ -573,8 +569,8 @@ class ContractService
         acompanhado da respectiva decisão judicial.
         </p><br>";
 
-            $contractContent .= "<b>17. DISPOSIÇÕES GERAIS</b><br>";
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<b>17. DISPOSIÇÕES GERAIS</b><br>";
+        $contractContent .= "<p style='text-align: justify;'>
         17.1. Garantias Adicionais. Cada uma das Partes obriga-se a assinar todos os documentos e
         a praticar todos os atos que venham a ser razoavelmente exigidos ou convenientes ao
         cumprimento das disposições deste Contrato e à consecução das operações aqui previstas.
@@ -607,7 +603,7 @@ class ContractService
         dúvidas, que possam surgir, na interpretação das cláusulas deste Contrato.
         </p><br>";
 
-            $contractContent .= "<p style='text-align: justify;'>
+        $contractContent .= "<p style='text-align: justify;'>
         Declaro para os devidos fins e sob as penas da Lei, que são verídicos e corretos os dados cadastrais
         constantes na Ficha Cadastral e que li e entendi claramente e aceito todas as cláusulas e condições
         do presente contrato.
@@ -630,10 +626,10 @@ class ContractService
         Assinatura do Gestor de Negócios_____________________________
                 </p><br>";
 
-            $contractContent .= "<b>Local:</b> {$user->city}<br>";
-            $contractContent .= "<b>Data de Criação:</b> " . date("d/m/Y") . "<br>";
+        $contractContent .= "<b>Local:</b> {$user->city}<br>";
+        $contractContent .= "<b>Data de Criação:</b> " . date("d/m/Y") . "<br>";
 
-            $contractContent .= "<b>Assinatura do Cliente:</b> {$user->name}<br>";
+        $contractContent .= "<b>Assinatura do Cliente:</b> {$user->name}<br>";
 
         return $contractContent;
     }

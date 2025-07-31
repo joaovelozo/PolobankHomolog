@@ -124,35 +124,48 @@ class BussinesChatController extends Controller
             }
 
             // Envio de imagem base64
+            // Envio de imagem base64
             if ($request->has('image')) {
-                // Log para debug do passo atual
-                \Log::info("Current step no envio da imagem: " . $currentStep);
+                \Log::info("Recebendo imagem na etapa: {$currentStep}");
 
-                if (!in_array($currentStep, [
+                $etapasPermitidas = [
                     'image_doc',
                     'image_doc_verso',
                     'image_comprovante',
                     'image_selfie',
-                    'cardBusiness',  // corrigido aqui
+                    'cardBusiness',
                     'imagecontrato',
                     'imagecomprovante_endereco'
-                ])) {
+                ];
+
+                if (!in_array($currentStep, $etapasPermitidas)) {
+                    \Log::warning("Imagem enviada fora da etapa correta. Etapa atual: {$currentStep}");
                     return response()->json(['reply' => 'Por favor, envie as imagens somente quando solicitado.'], 200);
                 }
 
-                $filename = $this->uploadBase64($request->input('image'), $currentStep);
-                if (!$filename) {
-                    return response()->json(['reply' => 'Falha ao salvar a imagem, tente novamente.'], 200);
+                // Valida o base64 (aceitando imagem ou PDF)
+                // Valida o base64 (aceitando imagem ou PDF)
+                if (!$this->validateBase64File($request->input('image'))) {
+                    \Log::error("Base64 inválido enviado na etapa: {$currentStep}");
+                    return response()->json(['reply' => 'Imagem inválida, tente novamente.'], 200);
                 }
 
-                $data[$currentStep] = $filename;
+                // Remove o prefixo "data:image/...;base64," ou "data:application/pdf;base64,"
+                $base64Completo = $request->input('image');
+                $base64Limpo = preg_replace('/^data:(image\/[a-zA-Z]+|application\/pdf);base64,/', '', $base64Completo);
+
+                // Salva apenas o base64 limpo
+                $data[$currentStep] = $base64Limpo;
+
                 $chat->data = $data;
                 $chat->step = $this->getNextStep($currentStep);
                 $chat->save();
 
+                \Log::info("Base64 salvo com sucesso. Próxima etapa: {$chat->step}");
+
                 if ($chat->step === 'done') {
                     $this->processFinalization($data);
-                    return response()->json(['reply' => 'Cadastro finalizado com sucesso!, Em Breve Você Receberá um Email de Boas Vindas! 🎉'], 200);
+                    return response()->json(['reply' => 'Cadastro finalizado com sucesso! Em até <b>05 dias úteis</b> Você receberá um e-mail de boas-vindas! 🎉'], 200);
                 }
 
                 return response()->json(['reply' => "Imagem recebida. Agora, por favor, envie: " . $this->getPromptMessage($chat->step)], 200);
@@ -180,29 +193,32 @@ class BussinesChatController extends Controller
                     break;
                 case 'simpleNational':
                     $lower = mb_strtolower($message);
-                    if (in_array($lower, ['EIRELI', 'eireli'])) {
+                    if (in_array($lower, ['eireli'])) {
                         $data['simpleNational'] = 'EIRELI';
-                    } elseif (in_array($lower, ['EI', 'ei'])) {
+                    } elseif (in_array($lower, ['ei'])) {
                         $data['simpleNational'] = 'EI';
-                    } elseif (in_array($lower, ['LTDA', 'ltda',])) {
+                    } elseif (in_array($lower, ['ltda'])) {
                         $data['simpleNational'] = 'LTDA';
-                    } elseif (in_array($lower, ['S/A', 's/a',])) {
+                    } elseif (in_array($lower, ['s/a'])) {
                         $data['simpleNational'] = 'S/A';
-                    } elseif (in_array($lower, ['SS', 'ss',])) {
-                        $data['simpleNational'] = 'ss';
-                    } elseif (in_array($lower, ['SLU', 'slu',])) {
-                        $data['simpleNational'] = 'slu';
+                    } elseif (in_array($lower, ['ss'])) {
+                        $data['simpleNational'] = 'SS';
+                    } elseif (in_array($lower, ['slu'])) {
+                        $data['simpleNational'] = 'SLU';
+                    } elseif (in_array($lower, ['me'])) {
+                        $data['simpleNational'] = 'ME';
                     } else {
                         return response()->json(['reply' => 'Opção inválida.'], 200);
                     }
                     break;
+
                 case 'companyRevenue':
                     $data['companyRevenue'] = $message;
                     break;
                 case 'stateRegistration':
                     $data['stateRegistration'] = $message;
                     break;
-                 case 'openDate':
+                case 'openDate':
                     $raw = preg_replace('/[^0-9]/', '', $message);
                     if (strlen($raw) !== 8) {
                         return response()->json(['reply' => 'Formato inválido. Use DD/MM/AAAA.'], 200);
@@ -436,7 +452,12 @@ class BussinesChatController extends Controller
             ]);
             $contract = $this->contractService->createContractForUser($user);
 
-            $this->businessAccountService->businessRegister($user->toArray());
+
+            $response = $this->businessAccountService->businessRegister($user->toArray());
+            $user->account_id = $response['account'];
+            $user->save();
+
+
 
             Log::info("Usuário {$user->id} criado com agência {$data['agency_id']}. Contrato ID: {$contract->id}");
             DB::commit();
@@ -465,69 +486,106 @@ class BussinesChatController extends Controller
     protected function getPromptMessage($step)
     {
         $prompts = [
-            'documentBusiness' => 'Digite o <b>CNPJ da Empresa!</b>',
+            'documentBusiness' => 'Digite o <b>CNPJ da Empresa  (Somente Números Sem Pontos)!</b>',
             'companyName' => 'Digite o <b>Nome da Empresa!</b>',
             'fantasyName' => 'Digite o nome<b> Nome Fantasia da Empresa!</b>',
-            'cnaeCode' => 'Digite o <b>CNAE da Empresa!</b>',
+            'cnaeCode' => 'Digite o <b>CNAE da Empresa  (Somente Números Sem Pontos)!</b>',
             'stateRegistration' => 'Digite a <b>Inscrição Estadual da sua Empresa (Se For o Caso Digite Insento)!</b>',
-            'openDate' => 'Digite a <b>Data de abertura da sua Empresa!</b>',
-            'simpleNational' => 'Tipo de empresa <b> (Ex:LTDA, S/A, MEI) </b>',
-            'companyRevenue' => 'Qual o <b>Faturamento Aproximado da Empresa?</b>',
-            'businessZipCode' => 'Qual o <b>CEP da Sua Empresa?</b>',
+            'openDate' => 'Digite a <b>Data de abertura da sua Empresa  (Somente Números Sem Pontos)!</b>',
+            'simpleNational' => 'Tipo de empresa <b> (Ex:LTDA, S/A, MEI,ME) </b>',
+            'companyRevenue' => 'Qual o <b>Faturamento Aproximado da Empresa  (Somente Números Sem Pontos)?</b>',
+            'businessZipCode' => 'Qual o <b>CEP da Sua Empresa  (Somente Números Sem Pontos)?</b>',
             'businessAddress' => 'Qual o <b>Endereço da Sua Empresa (Sem Número)?</b>',
-            'businessAddressNumber' => 'Qual o <b>Número do Endereço?</b>',
+            'businessAddressNumber' => 'Qual o <b>Número do Endereço  (Se For Sem Número Digite "00")?</b>',
             'businessState' => 'Qual o <b>Estado? (Sigla)</b>',
             'businessCity' => 'Qual a <b>Cidade?</b>',
             'businessNeighborhood' => 'Qual o <b>Bairro?</b>',
             'cardBusiness' => 'Agora Anexe o <b>Cartão CNPJ (Formato PDF)!</b>',
             'imagecontrato' => 'Anexe o <b>Contrato Social (Formato PDF)!</b>',
-            'imagecomprovante_endereco' => 'Anexe um <b>Comprovante de Endereço da Empresa (Formato Imagem)!</b>',
+            'imagecomprovante_endereco' => 'Anexe um <b>Comprovante de Endereço da Empresa (Imagem, PNG ou JPG)!</b>',
             'name' => 'Por favor, informe o <b>Nome Completo do Sócio!</b>',
             'username' => 'Como <b>Gostaria de Ser Chamado(a)?</b>',
             'nameMother' => 'Qual o <b>Nome da Sua Mãe?</b>',
-            'documentNumber' => 'Informe o <b> Número de Seu CPF (somente números)!</b>',
-            'identityDocument' => 'Informe o <b>Número do Seu Documento de Identidade ou CNH!</b>',
-            'issueDate' => 'Informe a <b>Data de Emissão de seu Documento de Identificação!</b>',
+            'documentNumber' => 'Informe o <b> Número de Seu CPF (Somente Números Sem Pontos)!</b>',
+            'identityDocument' => 'Informe o <b>Número do Seu Documento de Identidade ou CNH  (Somente Números Sem Pontos)!</b>',
+            'issueDate' => 'Informe a <b>Data de Emissão de seu Documento de Identificação  (Somente Números Sem Pontos)!</b>',
             'issuingAgency' => 'Informe o <b>Órgão Emissor de seu Documento de Identificação!</b>',
-            'issuingState' => 'Informe o <b>Estado Emissor de seu Documento de Identificação (sigla)!</b>',
+            'issuingState' => 'Informe o <b>Estado Emissor de seu Documento de Identificação (Sigla do Estado)!</b>',
             'gender' => 'Informe seu sexo: <b>Masculino, Feminino ou Outros!</b>',
             'idMaritalStatus' => 'Informe seu Estado Civil: <b>Solteiro, Casado, Separado ou Viúvo!</b>',
-            'political' => 'Você é PEP? Responda <b>Sim ou Não.</b>',
-            'phoneNumber' => 'Informe um <b>Número de Celular!</b>',
-            'cellPhone' => 'Informe seu <b>Npumero de WhatsApp!</b>',
-            'rent' => 'Informe sua <b>Renda Mensal Aproximada!</b>',
-            'birthdate' => 'Informe sua <b>Data de Nascimento!</b>',
+            'political' => 'Você é PEP (Pessoal Politicamente Exposta)? Responda <b>Sim ou Não.</b>',
+            'phoneNumber' => 'Informe um <b>Número de Celular  (Somente Números Sem Pontos)!</b>',
+            'cellPhone' => 'Informe seu <b>Número de WhatsApp  (Somente Números Sem Pontos)!</b>',
+            'rent' => 'Informe sua <b>Renda Mensal Aproximada  (Somente Números Sem Pontos)!</b>',
+            'birthdate' => 'Informe sua <b>Data de Nascimento  (Somente Números Sem Pontos)!</b>',
             'address' => 'Informe seu <b>Endereço Completo(Sem o Número)!</b>',
-            'addressNumber' => 'Informe de <b> Sua Residência</b>',
-            'zipCode' => 'Informe o <b>CEP de Sua Residência!</b>',
+            'addressNumber' => 'Informe  o Número <b> Sua Residência (Se For Sem Número Digite "00")</b>',
+            'zipCode' => 'Informe o <b>CEP de Sua Residência  (Somente Números Sem Pontos)!</b>',
             'neighborhood' => 'Informe o <b>Bairro de Sua Residência!</b>',
             'city' => 'Informe a <b> Cidade!</b>',
-            'state' => 'Informe o <b>Estado (sigla)!</b>',
+            'state' => 'Informe o <b>Estado (Sigla do Estado)!</b>',
             'email' => 'Informe seu <b>Email de Acesso!</b>',
             'password' => 'Crie Sua <b>Senha de Acesso!</b>',
             'accept_terms' => 'Você Concorda com <b> Os Termos de Uso? Sim ou Não!</b>',
-            'image_doc' => 'Agora <b>Envie uma Imagem da Frente de seu Documento de Identificação (Formato Imagem)!</b>',
-            'image_doc_verso' => 'Envie uma <b>Imagem do Verso de seu Documento de Identificação (Fomato Imagem)!</b>',
-            'image_comprovante' => 'Envie um <b>Comprovante de Endereço do Sócio (Formato Imagem)!</b>',
-            'image_selfie' => 'Envie uma <b>Selfie Segurando o Documento de Identificação (Formato Imagem)!</b>',
+            'image_doc' => 'Agora <b>Envie uma Imagem da Frente de seu Documento de Identificação (Imagem, PNG ou JPG)!</b>',
+            'image_doc_verso' => 'Envie uma <b>Imagem do Verso de seu Documento de Identificação (Imagem, PNG ou JPG)!</b>',
+            'image_comprovante' => 'Envie um <b>Comprovante de Endereço do Sócio (Imagem, PNG ou JPG)!</b>',
+            'image_selfie' => 'Envie uma <b>Selfie Segurando o Documento de Identificação (Imagem, PNG ou JPG)!</b>',
         ];
         return $prompts[$step] ?? 'Informe o próximo dado.';
     }
+
+    protected function validateBase64File($base64)
+    {
+        return preg_match('/^data:(image\/(\w+)|application\/pdf);base64,/', $base64);
+    }
+
     protected function uploadBase64($base64, $prefix)
     {
-        if (!$base64) return null;
+        if (!$base64) {
+            \Log::warning('Base64 vazio recebido no upload.');
+            return null;
+        }
 
-        // Extrai o tipo do arquivo do base64: ex: data:image/png;base64,...
+        // Limite do tamanho da string base64 bruta (~33% maior que o arquivo real)
+       $maxBase64Size = 100 * 1024 * 1024; // Aproximadamente suficiente para arquivos reais de até 10MB
+
+        if (strlen($base64) > $maxBase64Size) {
+            \Log::warning('Base64 excede o tamanho máximo permitido.', [
+                'tamanho_base64' => strlen($base64),
+                'prefixo' => $prefix
+            ]);
+            return null;
+        }
+
         if (preg_match('/^data:(.*);base64,/', $base64, $matches)) {
-            $mimeType = $matches[1]; // ex: image/png ou application/pdf
+            $mimeType = $matches[1];
+
+            \Log::info('Base64 identificado.', [
+                'mimeType' => $mimeType,
+                'prefixo' => $prefix
+            ]);
+
             $data = substr($base64, strpos($base64, ',') + 1);
             $data = base64_decode($data);
 
             if ($data === false) {
+                \Log::error('Falha ao decodificar base64.', [
+                    'prefixo' => $prefix
+                ]);
                 return null;
             }
 
-            // Define extensão com base no mime type
+            // Limite de tamanho real do arquivo após decode: 10MB
+            $maxSizeBytes = 15 * 1024 * 1024;
+            if (strlen($data) > $maxSizeBytes) {
+                \Log::warning('Arquivo decodificado excede 10MB.', [
+                    'tamanho_bytes' => strlen($data),
+                    'prefixo' => $prefix
+                ]);
+                return null;
+            }
+
             switch ($mimeType) {
                 case 'image/jpeg':
                 case 'image/jpg':
@@ -543,20 +601,31 @@ class BussinesChatController extends Controller
                     $extension = 'pdf';
                     break;
                 default:
-                    // Tipo não suportado
+                    \Log::warning('Tipo de arquivo não permitido.', [
+                        'mimeType' => $mimeType
+                    ]);
                     return null;
             }
 
-            // Gera nome do arquivo
             $filename = $prefix . '_' . time() . '.' . $extension;
 
-            // Salva o arquivo na storage (local ou s3 conforme sua config)
-            Storage::disk('public')->put($filename, $data);
+            try {
+                Storage::disk('public')->put($filename, $data);
+                \Log::info('Arquivo salvo com sucesso.', [
+                    'filename' => $filename,
+                    'tamanho_bytes' => strlen($data)
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Erro ao salvar arquivo.', [
+                    'erro' => $e->getMessage()
+                ]);
+                return null;
+            }
 
-            // Retorna o caminho ou nome do arquivo salvo
             return $filename;
         }
 
+        \Log::warning('Base64 inválido ou em formato incorreto.');
         return null;
     }
 }

@@ -116,7 +116,9 @@ class ManagerController extends Controller
             //dd($user->toArray());
 
                         //Service
-            $this->personalAccountService->personalRegister($user->toArray());
+             $response = $this->personalAccountService->personalRegister($user->toArray());
+            $user->account_id = $response['account'];
+            $user->save();
 
             $notification = [
                 'message' => 'Gerente Criado Com Sucesso!',

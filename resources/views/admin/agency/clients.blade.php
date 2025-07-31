@@ -114,16 +114,16 @@
                         name: 'name'
                     },
                     {
-                        data: 'account',
-                        name: 'account'
+                        data: 'account_id',
+                        name: 'account_id'
                     },
                     {
                         data: 'status',
                         name: 'status'
                     },
                     {
-                        data: 'cpfCnpj',
-                        name: 'cpfCnpj'
+                        data: 'documentNumber',
+                        name: 'documentNumber'
                     },
                     {
                         data: 'email',
@@ -134,8 +134,8 @@
                         name: 'plano'
                     },
                     {
-                        data: 'telefone',
-                        name: 'telefone'
+                        data: 'phoneNumber',
+                        name: 'phoneNumber'
                     },
                     {
                         data: 'balance',

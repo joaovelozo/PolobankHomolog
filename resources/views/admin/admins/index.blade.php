@@ -29,7 +29,7 @@
             <div class="row page-title align-items-center">
                 <div class="row">
                     <div class="col-md-3 col-xl-2">
-                        <img src="{{ asset('assets/backend/icon.png') }}" class="img-fluid" alt="Logo" width="200px">
+                        <img src="{{ asset('assets/backend/icon.png') }}" class="responsive" alt="Logo" width="200px">
                     </div>
                     <div class="col-md-9 col-xl-4 align-self-center">
                         <h4 class="mb-1 mt-0">Administradores</h4>

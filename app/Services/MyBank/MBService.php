@@ -17,11 +17,11 @@ class MBService
 
     public function createCustomer(array $payload)
     {
-        $baseUrl = rtrim(config('mb.url'), '/'); // removendo o slash final se ele existe
+        $baseUrl = rtrim(config('mb.url'), '/');
         $clientId = config('mb.client_id');
         $clientSecret = config('mb.client_secret');
         $grantType = config('mb.grant_type');
-        $applicationToken = config('mb.application_token'); // <-- pega o token do .env
+        $applicationToken = config('mb.application_token');
 
         // Gera o token via TokenService
         $tokenResponse = $this->tokenService->generateToken($baseUrl, $clientId, $clientSecret, $grantType);
@@ -36,7 +36,7 @@ class MBService
         $url = $baseUrl . '/CreateCustomer';
         Log::info('URL que será usada (CreateCustomer): ' . $url);
 
-       $method = !empty($payload) ? 'POST' : 'GET';
+        $method = !empty($payload) ? 'POST' : 'GET';
         Log::info('Método da requisição: ' . $method);
         Log::info('URL que será usada (CreateBusiness): ' . $url);
 
@@ -59,11 +59,11 @@ class MBService
 
     public function createBusiness(array $payload)
     {
-        $baseUrl = rtrim(config('mb.url'), '/'); // removendo o slash final se ele existe
+        $baseUrl = rtrim(config('mb.url'), '/');
         $clientId = config('mb.client_id');
         $clientSecret = config('mb.client_secret');
         $grantType = config('mb.grant_type');
-        $applicationToken = config('mb.application_token'); // <-- pega o token do .env
+        $applicationToken = config('mb.application_token');
 
         // Gera o token via TokenService
         $tokenResponse = $this->tokenService->generateToken($baseUrl, $clientId, $clientSecret, $grantType);

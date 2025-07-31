@@ -180,9 +180,9 @@ class AgencyController extends Controller
                 // Condição de busca, aplicando pesquisa por nome, email ou cpfCnpj
                 return $query->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('document', 'like', "%{$search}%");
+                    ->orWhere('documentNumber', 'like', "%{$search}%");
             });
-    
+
         // Contagem total de registros (sem filtros)
         $totalData = User::where('agency_id', $agency->id)->count();
 
@@ -194,18 +194,18 @@ class AgencyController extends Controller
             ->limit($length)
             ->get();
 
-       
+
         // Preparar dados para retorno ao DataTables
         $data = [];
         foreach ($clients as $client) {
 
             $nestedData['name'] = $client->name;
             $nestedData['status'] = $client->status;
-            $nestedData['account'] = $client->account;
-            $nestedData['cpfCnpj'] = $client->document;
+            $nestedData['account_id'] = $client->account_id;
+            $nestedData['documentNumber'] = $client->documentNumber;
             $nestedData['email'] = $client->email;
             $nestedData['plano'] = $client->plan ? $client->plan->title : 'Sem plano';
-            $nestedData['telefone'] = $client->phone;
+            $nestedData['phoneNumber'] = $client->phoneNumber;
             $nestedData['balance'] = 'R$' . number_format($client->balance(), 2, ',', '.');
             $nestedData['perfil'] = $client->role === 'manager' ? 'Gerente' : ($client->role === 'user' ? 'Cliente' : 'Outro Papel');
             $nestedData['created_at'] = $client->created_at ? $client->created_at->format('d/m/Y H:i:s') : '';

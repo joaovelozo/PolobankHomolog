@@ -30,7 +30,7 @@
             <hr>
             @if ($status === 'active')
                 <form action="{{ route('mkey.store') }}" method="POST">
-                    @csrf
+                   @csrf
 
                     <div class="mb-3">
                         <label for="type">Tipo da Chave</label>
@@ -88,6 +88,30 @@
                                 keyInput.value = '+55' + keyInput.value.replace(/^\+*/, '').replace(/^55*/, '');
                             }
                         }
+                    });
+                </script>
+
+                <script>
+                    $(function() {
+                        @if (session('message'))
+                            toastr.options = {
+                                closeButton: true,
+                                progressBar: true,
+                                positionClass: "toast-top-right",
+                                timeOut: 11000
+                            };
+                            toastr["success"]({!! json_encode(session('message')) !!});
+                        @endif
+
+                        @if (session('error'))
+                            toastr.options = {
+                                closeButton: true,
+                                progressBar: true,
+                                positionClass: "toast-top-right",
+                                timeOut: 11000
+                            };
+                            toastr["error"]({!! json_encode(session('error')) !!});
+                        @endif
                     });
                 </script>
             @else

@@ -1,7 +1,7 @@
 <?php
 namespace App\Services\MyBank;
 
-class cprService
+class CprService
 {
     protected $cprToken;
     public function __construct()

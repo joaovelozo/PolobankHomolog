@@ -35,15 +35,42 @@
 </head>
 
 <body>
+
+    <!-- Modal de Boas-vindas -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="welcomeModalLabel">Bem-vindo ao Polocal Bank IA</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Antes de começar, aqui vão algumas dicas:</strong></p>
+                    <ul>
+                         <li>Documento de Identificação <strong>não podem ter mais de 5 Anos</strong></li>
+                                       <li>Comprovantes de residência <strong>não podem ter mais de 90 dias</strong></li>
+                         <li>Não precisa digitar pontos ou traços nos campos: <strong>CPF, CNPJ, CEP, Valores
+                                Monetários</strong>. Digite apenas números.</li>
+                        <li>As imagens dos documentos devem ser formato <strong>Imagem (PNG,JPG)</strong> e não podem ter mais de <strong>3 MB</strong> de tamanho.
+                        </li>
+                        <li>Em caso de problemas ou dúvidas, entre em contato com o <strong><a href="https://virtualbrain.com.br/" target="blank">suporte</a></strong>.</li>
+                    </ul>
+                    <p class="mt-3">Abra agora mesmo sua conta e aproveite as vantagens!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Começar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-6">
                 <div class="card shadow-sm mt-4">
-
                     <br>
                     <div class="card-header bg-success text-white">
-
-                        <h3 class="mb-0">Bem Vindo ao Polocal Bank IA - Conta PF</h3>
+                        <h3 class="mb-0">Polocal Bank IA - Conta PF</h3>
                     </div>
                     <div class="card-body p-0">
                         <div class="chat-messages" id="chatMessages"></div>
@@ -70,124 +97,152 @@
             </div>
         </div>
     </div>
+<script src="{{ asset('assets/frontend/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        const onboardingUrl = "{{ route('chat.onboarding', ['agency_id' => $agency]) }}";
+        const startUrl = "{{ route('chat.start', ['agency_id' => $agency]) }}";
+        const resetUrl = "{{ route('chat.reset') }}";
 
-   <script>
-const onboardingUrl = "{{ route('chat.onboarding', ['agency_id' => $agency]) }}";
-const startUrl = "{{ route('chat.start', ['agency_id' => $agency]) }}";
-const resetUrl = "{{ route('chat.reset') }}";
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const inputImage = document.getElementById('inputImage');
+        const btnSend = document.getElementById('btnSend');
 
-const chatMessages = document.getElementById('chatMessages');
-const chatForm = document.getElementById('chatForm');
-const chatInput = document.getElementById('chatInput');
-const inputImage = document.getElementById('inputImage');
-const btnSend = document.getElementById('btnSend');
+        function addMessage(text, fromUser = false) {
+            const div = document.createElement('div');
+            div.className = 'message ' + (fromUser ? 'user' : 'bot');
+            div.innerHTML = text;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
 
-function addMessage(text, fromUser = false) {
-    const div = document.createElement('div');
-    div.className = 'message ' + (fromUser ? 'user' : 'bot');
-    div.innerHTML = text;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+        async function sendText() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            addMessage(message, true);
+            chatInput.value = '';
+            chatInput.disabled = true;
+            btnSend.disabled = true;
 
-async function sendText() {
-    const message = chatInput.value.trim();
-    if (!message) return;
-    addMessage(message, true);
-    chatInput.value = '';
-    chatInput.disabled = true;
-    btnSend.disabled = true;
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
 
-    try {
-        const formData = new FormData();
-        formData.append('message', message);
+                const response = await fetch(onboardingUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
 
-        const response = await fetch(onboardingUrl, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
+                const data = await response.json();
+                addMessage(data.reply, false);
+            } catch (err) {
+                console.error('Erro:', err);
+                addMessage('Erro na comunicação com o servidor.', false);
             }
+
+            chatInput.disabled = false;
+            btnSend.disabled = false;
+            chatInput.focus();
+        }
+
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendText();
         });
 
-        const data = await response.json();
-        addMessage(data.reply, false);
-    } catch (err) {
-        console.error('Erro:', err);
-        addMessage('Erro na comunicação com o servidor.', false);
-    }
+        inputImage.addEventListener('change', () => {
+            const file = inputImage.files[0];
+            if (!file) return;
 
-    chatInput.disabled = false;
-    btnSend.disabled = false;
-    chatInput.focus();
-}
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const base64Completo = event.target.result;
 
-chatForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    sendText();
-});
+                // Remove o prefixo "data:image/...;base64,"
+                const base64Limpo = base64Completo.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
 
-inputImage.addEventListener('change', () => {
-    const file = inputImage.files[0];
-    if (!file) return;
+                addMessage('<i>Enviando imagem...</i>', true);
+                inputImage.disabled = true;
 
-    const reader = new FileReader();
-    reader.onload = async function(event) {
-        const base64Image = event.target.result;
-        addMessage('<i>Enviando imagem...</i>', true);
-        inputImage.disabled = true;
+                try {
+                    const formData = new FormData();
+                    formData.append('image', base64Limpo);
 
-        try {
-            const formData = new FormData();
-            formData.append('image', base64Image);
+                    const response = await fetch(onboardingUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                .content,
+                            'Accept': 'application/json'
+                        }
+                    });
 
-            const response = await fetch(onboardingUrl, {
+                    const data = await response.json();
+                    addMessage(data.reply, false);
+                } catch (err) {
+                    console.error('Erro:', err);
+                    addMessage('Erro ao enviar a imagem.', false);
+                }
+
+                inputImage.value = '';
+                inputImage.disabled = false;
+                chatInput.focus();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function resetChat() {
+            const response = await fetch(resetUrl, {
                 method: 'POST',
-                body: formData,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json'
                 }
             });
-
             const data = await response.json();
+            alert(data.reply);
+            window.location.reload();
+        }
+
+        window.addEventListener('load', async () => {
+            const res = await fetch(startUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await res.json();
             addMessage(data.reply, false);
-        } catch (err) {
-            console.error('Erro:', err);
-            addMessage('Erro ao enviar a imagem.', false);
-        }
+        });
+    </script>
 
-        inputImage.value = '';
-        inputImage.disabled = false;
-        chatInput.focus();
-    };
-    reader.readAsDataURL(file);
-});
+    <script>
+        window.addEventListener('load', () => {
+            // Exibe o modal de boas-vindas ao carregar a página
+            const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+            welcomeModal.show();
 
-async function resetChat() {
-    const response = await fetch(resetUrl, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-        }
-    });
-    const data = await response.json();
-    alert(data.reply);
-    window.location.reload();
-}
+            // Chamada normal do chat
+            fetch(startUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    addMessage(data.reply, false);
+                })
+                .catch(err => console.error('Erro ao iniciar chat:', err));
+        });
+    </script>
 
-// Chama primeira mensagem automaticamente ao abrir a tela
-window.addEventListener('load', async () => {
-    const res = await fetch(startUrl, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-    });
-    const data = await res.json();
-    addMessage(data.reply, false);
-});
-</script>
-
+</body>
 
 </html>

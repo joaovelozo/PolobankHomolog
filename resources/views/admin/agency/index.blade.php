@@ -32,7 +32,7 @@
                 <div class="row page-title align-items-center">
                     <div class="row">
                         <div class="col-md-3 col-xl-2">
-                            <img src="{{ asset('assets/backend/icon.png') }}" class="img-fluid" alt="Logo"
+                            <img src="{{ asset('assets/backend/icon.png') }}" class="responsive" alt="Logo"
                                 width="200px">
                         </div>
                         <div class="col-md-9 col-xl-4 align-self-center">
@@ -91,7 +91,7 @@
                                                     <td><strong>{{ $item->name }}</strong></td>
                                                     <td>{{ $item->number }}</td>
                                                     <td>{{ $item->email }}</td>
-                                                    <td>{{ $item->user->name ?? 'Não Atribuído' }}</td>
+                                                    <td>{{ $item->user->username ?? 'Não Atribuído' }}</td>
 
                                                     <td>
                                                         <div style="display: flex; align-items: flex-start;">

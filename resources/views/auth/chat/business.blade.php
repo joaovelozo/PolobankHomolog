@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Abertura de Conta Pessoa Juridíca</title>
+    <title>Abertura de Conta Pessoa Jurídica</title>
     <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/general-sans?styles=135312,135310,135313,135303">
     <link rel="stylesheet" href="{{ asset('assets/frontend/css/bootstrap/bootstrap.min.css') }}">
     <style>
@@ -35,15 +35,42 @@
 </head>
 
 <body>
-    <div class="container-fluid">
+     <div class="container-fluid">
         <div class="row justify-content-center">
+     <!-- Modal de Boas-vindas -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="welcomeModalLabel">Bem-vindo ao Polocal Bank IA</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Antes de começar, aqui vão algumas dicas:</strong></p>
+                    <ul>
+                         <li>Documento de Identificação <strong>não podem ter mais de 5 Anos</strong></li>
+                                       <li>Comprovantes de residência <strong>não podem ter mais de 90 dias</strong></li>
+                         <li>Não precisa digitar pontos ou traços nos campos: <strong>CPF, CNPJ, CEP, Valores
+                                Monetários</strong>. Digite apenas números.</li>
+                        <li>Os arquivos <strong>PDF</strong> não podem ter mais de <strong>3 MB</strong> de tamanho.
+                        </li>
+                          <li>Em caso de problemas ou dúvidas, entre em contato com o <strong><a href="https://virtualbrain.com.br/" target="blank">suporte</a></strong>.</li>
+                    </ul>
+                    <p class="mt-3">Abra agora mesmo sua conta e aproveite as vantagens!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Começar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
             <div class="col-12 col-md-8 col-lg-6">
                 <div class="card shadow-sm mt-4">
-
                     <br>
                     <div class="card-header bg-success text-white">
-
-                        <h3 class="mb-0">Bem Vindo ao Polocal Bank IA Conta PJ</h3>
+                        <h3 class="mb-0">Polocal Bank IA Conta PJ</h3>
                     </div>
                     <div class="card-body p-0">
                         <div class="chat-messages" id="chatMessages"></div>
@@ -72,7 +99,9 @@
         </div>
     </div>
 
-    <script>
+    <script src="{{ asset('assets/frontend/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
+
+<script>
 const onboardingUrl = "{{ route('chat.business', ['agency_id' => $agency]) }}";
 const startUrl = "{{ route('chat.play', ['agency_id' => $agency]) }}";
 const resetUrl = "{{ route('chat.reset') }}";
@@ -94,10 +123,20 @@ function addMessage(text, fromUser = false) {
 async function sendText() {
     const message = chatInput.value.trim();
     if (!message) return;
-    addMessage(message, true);
+
+    addMessage('<span id="loadingMsg">Enviando mensagem</span>', true);
     chatInput.value = '';
     chatInput.disabled = true;
     btnSend.disabled = true;
+
+    let dots = 0;
+    const loadingInterval = setInterval(() => {
+        const loadingEl = document.getElementById('loadingMsg');
+        if (loadingEl) {
+            dots = (dots + 1) % 4;
+            loadingEl.textContent = 'Enviando mensagem' + '.'.repeat(dots);
+        }
+    }, 500);
 
     try {
         const formData = new FormData();
@@ -113,9 +152,11 @@ async function sendText() {
         });
 
         const data = await response.json();
+        clearInterval(loadingInterval);
         addMessage(data.reply, false);
     } catch (err) {
         console.error('Erro:', err);
+        clearInterval(loadingInterval);
         addMessage('Erro na comunicação com o servidor.', false);
     }
 
@@ -135,13 +176,22 @@ inputImage.addEventListener('change', () => {
 
     const reader = new FileReader();
     reader.onload = async function(event) {
-        const base64Image = event.target.result;
-        addMessage('<i>Enviando imagem...</i>', true);
+        const base64File = event.target.result;
+        addMessage('<span id="loadingImg">Enviando arquivo</span>', true);
         inputImage.disabled = true;
+
+        let dotsImg = 0;
+        const loadingIntervalImg = setInterval(() => {
+            const loadingEl = document.getElementById('loadingImg');
+            if (loadingEl) {
+                dotsImg = (dotsImg + 1) % 4;
+                loadingEl.textContent = 'Enviando arquivo' + '.'.repeat(dotsImg);
+            }
+        }, 500);
 
         try {
             const formData = new FormData();
-            formData.append('image', base64Image);
+            formData.append('image', base64File);
 
             const response = await fetch(onboardingUrl, {
                 method: 'POST',
@@ -153,10 +203,12 @@ inputImage.addEventListener('change', () => {
             });
 
             const data = await response.json();
+            clearInterval(loadingIntervalImg);
             addMessage(data.reply, false);
         } catch (err) {
             console.error('Erro:', err);
-            addMessage('Erro ao enviar a imagem.', false);
+            clearInterval(loadingIntervalImg);
+            addMessage('Erro ao enviar o arquivo.', false);
         }
 
         inputImage.value = '';
@@ -179,7 +231,6 @@ async function resetChat() {
     window.location.reload();
 }
 
-// Chama primeira mensagem automaticamente ao abrir a tela
 window.addEventListener('load', async () => {
     const res = await fetch(startUrl, {
         method: 'GET',
@@ -189,6 +240,27 @@ window.addEventListener('load', async () => {
     addMessage(data.reply, false);
 });
 </script>
-</body>
 
+ <script>
+        window.addEventListener('load', () => {
+            // Exibe o modal de boas-vindas ao carregar a página
+            const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+            welcomeModal.show();
+
+            // Chamada normal do chat
+            fetch(startUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    addMessage(data.reply, false);
+                })
+                .catch(err => console.error('Erro ao iniciar chat:', err));
+        });
+    </script>
+
+</body>
 </html>

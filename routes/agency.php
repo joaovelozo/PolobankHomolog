@@ -78,6 +78,8 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     //PIX
     Route::get('/agency/pix', [AgencyPaymentController::class, 'index'])->name('agency.pix.index');
+     Route::get('/agency/agencypreview', [AgencyPaymentController::class, 'pixPreview'])->name('payment.agencypreview');
+    Route::post('/agency/agencypreview', [AgencyPaymentController::class, 'pixPreview'])->name('payment.agencypreview');
     Route::get('/agency/payment/pix', [AgencyPaymentController::class, 'pix'])->name('agency.payment.pix');
     Route::post('/agency/payment/pix/create', [AgencyPaymentController::class, 'storePix'])->name('agency.payment.pix.store');
     Route::get('/agency/payment/pix/extract', [AgencyPaymentController::class, 'pix_extract'])->name('agency.payment.pix.extract');

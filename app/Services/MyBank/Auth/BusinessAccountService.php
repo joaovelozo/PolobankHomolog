@@ -3,7 +3,7 @@
 namespace App\Services\MyBank\Auth;
 
 use App\Services\Mybank\businessService;
-use App\Services\Mybank\MBService;
+use App\Services\MyBank\MBService;
 
 class BusinessAccountService
 {

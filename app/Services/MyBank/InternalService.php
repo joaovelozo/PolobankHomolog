@@ -3,6 +3,7 @@ namespace App\Services\MyBank;
 
 
 use App\Services\MyBank\TokenService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -20,9 +21,10 @@ class InternalService
     public function internalTransfer(array $payload)
     {
  {
+        $user = Auth::user();
         $baseUrl = rtrim(config('mb.url'), '/'); // removendo o slash final se ele existe
-        $clientId = config('mb.client_id');
-        $clientSecret = config('mb.client_secret');
+        $clientId = $user->client_id;
+        $clientSecret = $user->client_secret;
         $grantType = config('mb.grant_type');
         $applicationToken = config('mb.application_token'); // <-- pega o token do .env
 

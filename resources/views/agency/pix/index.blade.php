@@ -19,12 +19,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Pagar</h5>
                     <div class="row">
-                        <div class="col text-left">
-                            <a href="{{route('agency.payment.pix')}}">
-                                <i class="fa-brands fa-pix"></i> <!-- Ícone de transferir -->
-                                <span>Pix Copia e Cola</span> <!-- Texto abaixo do ícone -->
-                            </a>
-                        </div>
+
                         <div class="col text-left">
                             <a href="{{route('agency.transfer.pix')}}">
                                 <i class="fas fa-key"></i>
@@ -51,7 +46,7 @@
                             </a>
                         </div>
                         <div class="col text-left">
-                       
+
                         </div>
                         <div class="col text-center">
                             <a href="{{ route('agency.qrcode.extract') }}">

@@ -41,42 +41,51 @@ class PixKeyController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $request->validate([
-            'type' => 'required|in:EVP,DOCUMENT,PHONE,EMAIL',
-            'key' => 'nullable|string|max:255',
-        ]);
+    $request->validate([
+        'type' => 'required|in:EVP,DOCUMENT,PHONE,EMAIL',
+        'key' => 'nullable|string|max:255',
+    ]);
 
-        // Se for EVP, o Pix é gerado automaticamente pelo serviço
-        $payload = ['type' => $request->input('type')];
-        if ($payload['type'] !== 'EVP') {
-            $payload['key'] = $request->input('key'); // o usuário precisa informar
-        }
+    $payload = ['type' => $request->input('type')];
 
-        // Chama o serviço para criar na API Pix
-        $resposta = $this->pixKeyService->createPixKey($payload);
-
-        // Trata erro do serviço
-        if (isset($resposta['status']) && $resposta['status'] === 500) {
-            return redirect()
-                ->back()
-                ->with('error', 'Ocorreu um erro ao gerar a chave PIX. Tente novamente mais tarde.');
-        }
-
-        // Salva no banco de dados a nova chave Pix junto com o usuário
-        PixKey::create([
-            'user_id' => $user->id,
-            'type' => $resposta['tipo_chave'] ?? $payload['type'],
-            'key' => $resposta['chave'] ?? ($payload['key'] ?? null),
-        ]);
-
-        return redirect()
-            ->route('managerkey.index')
-            ->with('message', $resposta['message'] ?? 'Chave criada com sucesso.');
+    if ($payload['type'] !== 'EVP') {
+        $payload['key'] = $request->input('key');
     }
 
+    // Chama o serviço para criar na API Pix
+    $resposta = $this->pixKeyService->createPixKey($payload);
+
+    // Trata erro do serviço
+    if (isset($resposta['status']) && $resposta['status'] === 500) {
+        return redirect()
+            ->back()
+            ->with('error', 'Ocorreu um erro ao gerar a chave PIX. Tente novamente mais tarde.');
+    }
+
+    // Obtém a chave gerada
+    $chave = $resposta['chave'] ?? $payload['key'] ?? null;
+
+    // Valida se a chave veio corretamente
+    if (empty($chave)) {
+        return redirect()
+            ->back()
+            ->with('error', 'A chave PIX não foi gerada corretamente. Tente novamente.');
+    }
+
+    // Salva no banco de dados
+    PixKey::create([
+        'user_id' => $user->id,
+        'type' => $resposta['tipo_chave'] ?? $payload['type'],
+        'key' => $chave,
+    ]);
+
+    return redirect()
+        ->route('managerkey.index')
+        ->with('message', $resposta['message'] ?? 'Chave criada com sucesso.');
+}
     /**
      * Display the specified resource.
      */

@@ -16,5 +16,7 @@ class VerifyCsrfToken extends Middleware
 
         //Salvar dados dos usuário enquanto navegam
         'api/save-location',
+
+        '/webhook/update-user',
     ];
 }
