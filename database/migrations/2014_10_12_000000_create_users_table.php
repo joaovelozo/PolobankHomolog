@@ -74,7 +74,7 @@ return new class extends Migration
             $table->string('cardBusiness')->nullable();
             $table->string('imagecontrato')->nullable();
             $table->string('imagecomprovante_endereco')->nullable();
-            $table->enum('simpleNational', ['MEI', 'EI','LTDA','S/A','SS','SLU','EIRELI'])->nullable();
+            $table->enum('simpleNational', ['MEI','ME', 'EI','LTDA','S/A','SS','SLU','EIRELI'])->nullable();
 
 
             $table->rememberToken();

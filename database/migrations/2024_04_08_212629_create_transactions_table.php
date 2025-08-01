@@ -16,9 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->string('token')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->string('externalId')->nullable();
-            $table->string('invoiceCode');
-            $table->string('qrCodeString');
+            $table->string('cpfcnpj')->nullable();
             $table->string('code')->nullable();
             $table->string('name')->nullable();
             $table->string('document_number')->nullable();
