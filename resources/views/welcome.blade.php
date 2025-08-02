@@ -147,7 +147,7 @@
                   <h1 class="h3 text-white mb-6">Conta Pessoa Física</h1>
                   <p class="text-secondary-light mb-8">Abra agora mesmo sua conta e aproveite as vantagens que só o Polocal Bank pode te proporcionar</p>
                   <div class="d-flex flex-column flex-md-row">
-      <a class="btn mb-4 mb-md-0 me-md-4 btn-light fw-medium" href="{{ url('chat/onboarding/2') }}">Abrir Conta PF</a>
+      <a class="btn mb-4 mb-md-0 me-md-4 btn-light fw-medium" href="{{ url('chat/onboarding/1') }}">Abrir Conta PF</a>
       </div>
                 </div>
               </div>
@@ -166,7 +166,7 @@
                   <div class="mt-auto">
                     <h4 class="text-white mb-4">Conta PJ</h4>
                     <p class="text-info-light mb-8">Sua empresa merece produtos e serviços diferenciados como empréstimos, pagamentos e muito mais.</p>
-      <a class="btn btn-light" href="{{ url('chat/business/2') }}">Abrir  Conta PJ</a>
+      <a class="btn btn-light" href="{{ url('chat/business/1') }}">Abrir  Conta PJ</a>
                   </div>
                 </div>
               </div>

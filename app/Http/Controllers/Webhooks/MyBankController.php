@@ -57,7 +57,7 @@ class MyBankController extends Controller
 
         return response()->json([
             'message' => 'Usuário atualizado com sucesso',
-            'confirmationUrl' => 'http://webapp404720.ip-45-33-25-35.cloudezapp.io/webhook/update-user',
+            'confirmationUrl' => 'https://polocalbank.com.br/webhook/update-user',
             'defaultWebhook' => 'https://webhook.site/543dc354-639e-46cd-bb16-4d9c678810e0',
         ]);
     }
